@@ -1,4 +1,7 @@
-"""独立列块的规范存储及完整行慢速读取。"""
+"""独立列块的规范存储及完整行慢速读取。
+
+``read_rows`` / ``load_column`` 保持既有契约；按需读取见 ``reader.py``。
+"""
 
 class ColumnFile:
     def __init__(self,store):self.store=store
@@ -29,6 +32,11 @@ class ColumnFile:
         for i in range(m['count']):
             if i not in m['deleted']:
                 yield {'identity':[head,m['file_id'],m['rowgroup'],i],'values':{f:v[i] for f,v in cols.items()}}
+
+def open_reader(store,head,*,budget=None):
+    """打开按需列块读取器；既有整行路径不受影响。"""
+    from .reader import ColumnReader
+    return ColumnReader(store,head,budget=budget)
 
 def inspect(data,store,root):
     service=ColumnFile(store);head=service.create(data);rows=list(service.read_rows(head))

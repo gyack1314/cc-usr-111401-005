@@ -10,6 +10,22 @@ class ObjectStore:
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
 
+    @staticmethod
+    def check_identity(digest):
+        if not isinstance(digest,str) or len(digest)!=64 or any(c not in '0123456789abcdef' for c in digest):
+            raise ValueError('对象身份非法')
+
+    def _path(self, digest):
+        self.check_identity(digest)
+        return self.root / digest
+
+    def size(self, digest):
+        """返回对象实际字节数，不读取对象内容。"""
+        try:
+            return self._path(digest).stat().st_size
+        except FileNotFoundError:
+            raise ValueError('对象不存在') from None
+
     def put(self, raw):
         if not isinstance(raw, bytes):
             raise TypeError('对象必须是字节')
@@ -32,9 +48,11 @@ class ObjectStore:
         return digest
 
     def get(self, digest):
-        if not isinstance(digest,str) or len(digest)!=64 or any(c not in '0123456789abcdef' for c in digest):
-            raise ValueError('对象身份非法')
-        raw = (self.root / digest).read_bytes()
+        path = self._path(digest)
+        try:
+            raw = path.read_bytes()
+        except FileNotFoundError:
+            raise ValueError('对象不存在') from None
         if hashlib.sha256(raw).hexdigest() != digest:
             raise ValueError('对象摘要不符')
         return raw

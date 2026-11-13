@@ -4,10 +4,16 @@ Python 3.11 项目，用于读取、保存及核对协作资料仓的本地资�
 
 已有读取流程使用临时目录，不改变源资料。当前只提供源码中已实现的基础操作，输出相应对象身份、行或引用摘要。领域接口的测试说明其现有边界，不承诺额外的管理或查询功能。
 
+按需查询位于 warehouse/reader.py：先读过滤/排序列，再按选择向量取输出列；
+支持批向量或稀疏区间调度、三值过滤、列块预算和提前关闭，并记录实际列块
+访问与读取字节。`python -m warehouse --compare ...` 会用既有整行读取复核
+同一结果并给出字节对照，细节见 docs/contracts.md。
+
 运行与开发检查：
 
 ```sh
 python -m unittest discover -s tests -v
 python -m compileall -q warehouse tests
 python -m warehouse
+python -m warehouse --compare --where '["=","20","a"]' --fields 10
 ```
